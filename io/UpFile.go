@@ -37,6 +37,7 @@ func (pfile *UpFile) Read(b []byte) (n int, err error) {
 		go pfile.onProgress(pfile.fsize, pfile.fsize)
 		return
 	}
+	
 	if !pfile.tag {
 		pfile.tag = true
 		return

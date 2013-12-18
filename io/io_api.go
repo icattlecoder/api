@@ -62,15 +62,11 @@ func PutFile(l rpc.Logger, ret interface{}, uptoken, key, localFile string, extr
 	return putFile(l, ret, uptoken, key, true, localFile, extra)
 }
 
-func PutFileWithProgress(l rpc.Logger, ret interface{}, uptoken, key string, hasKey bool, localFile string, extra *PutExtra, onProgress func(file_size, uploaded int64)) error {
+func PutFileWithProgress(l rpc.Logger, ret interface{}, uptoken, key string,hasKey bool, localFile string, extra *PutExtra, onProgress func(file_size, uploaded int64)) error {
 
-	return putFileWithProgress(l, ret, uptoken, "", false, localFile, extra, onProgress)
-}
-
-func putFileWithProgress(l rpc.Logger, ret interface{}, uptoken, key string, hasKey bool, localFile string, extra *PutExtra, onProgress func(file_size, uploaded int64)) (err error) {
-	f, err := OpenUpFile(localFile, onProgress)
+    f, err := OpenUpFile(localFile, onProgress)
 	if err != nil {
-		return
+		return err
 	}
 	defer f.Close()
 	return putWrite(l, ret, uptoken, key, hasKey, f, extra)
