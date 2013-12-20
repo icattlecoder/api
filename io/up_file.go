@@ -34,7 +34,7 @@ func (pfile *UpFile) Read(b []byte) (n int, err error) {
 
 	n, err = pfile.file.Read(b)
 	if err == io.EOF {
-		go pfile.onProgress(pfile.fsize, pfile.fsize)
+		//almost finished
 		return
 	}
 	

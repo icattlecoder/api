@@ -79,6 +79,7 @@ func PutFileWithProgress(l rpc.Logger, ret interface{}, uptoken, key string, has
 	if err != nil {
 		event.OnFailed(err)
 	} else {
+		//really finished!
 		event.OnFinished(ret)
 	}
 	return err
