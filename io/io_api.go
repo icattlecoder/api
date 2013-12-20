@@ -13,6 +13,13 @@ import (
 	. "github.com/qiniu/api/conf"
 )
 
+type uploadEvents interface {
+	OnProgress(filesize, uploadedBytes int64)	//上传进度
+	OnFinished(ret interface{}) 				//上传完成
+	OnFailed(err error) 						//上传失败
+}
+
+
 // ----------------------------------------------------------
 
 // @gist PutExtra
@@ -62,14 +69,20 @@ func PutFile(l rpc.Logger, ret interface{}, uptoken, key, localFile string, extr
 	return putFile(l, ret, uptoken, key, true, localFile, extra)
 }
 
-func PutFileWithProgress(l rpc.Logger, ret interface{}, uptoken, key string,hasKey bool, localFile string, extra *PutExtra, onProgress func(file_size, uploaded int64)) error {
+func PutFileWithProgress(l rpc.Logger, ret interface{}, uptoken, key string, hasKey bool, localFile string, extra *PutExtra, events uploadEvents) error {
 
-    f, err := OpenUpFile(localFile, onProgress)
+	f, err := OpenUpFile(localFile, event.OnProgress)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	return putWrite(l, ret, uptoken, key, hasKey, f, extra)
+	err = putWrite(l, ret, uptoken, key, hasKey, f, extra)
+	if err != nil {
+		event.OnFailed(err)
+	} else {
+		event.OnFinished(ret)
+	}
+	return err
 }
 
 
