@@ -19,7 +19,6 @@ type uploadEvents interface {
 	OnFailed(err error) 						//上传失败
 }
 
-
 // ----------------------------------------------------------
 
 // @gist PutExtra
@@ -84,7 +83,6 @@ func PutFileWithProgress(l rpc.Logger, ret interface{}, uptoken, key string, has
 	}
 	return err
 }
-
 
 func PutFileWithoutKey(l rpc.Logger, ret interface{}, uptoken, localFile string, extra *PutExtra) (err error) {
 	return putFile(l, ret, uptoken, "", false, localFile, extra)
