@@ -12,7 +12,7 @@ type UpFile struct {
 	file       *os.File
 	tag        bool
 	fsize      int64
-	onProgress func(file_size, uploaded int64)
+	onProgress OnProgressFunc
 }
 
 func OpenUpFile(name string, onProgress OnProgressFunc) (pfile *UpFile, err error) {
