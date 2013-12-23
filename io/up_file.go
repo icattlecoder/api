@@ -5,6 +5,8 @@ import (
 	"os"
 )
 
+type OnProgressFunc func(file_size, uploaded int64)
+
 type UpFile struct {
 	uploaded   int64
 	file       *os.File
@@ -13,7 +15,7 @@ type UpFile struct {
 	onProgress func(file_size, uploaded int64)
 }
 
-func OpenUpFile(name string, onProgress func(file_size, uploaded int64)) (pfile *UpFile, err error) {
+func OpenUpFile(name string, onProgress OnProgressFunc) (pfile *UpFile, err error) {
 	f, err := os.Open(name)
 	pfile = new(UpFile)
 	pfile.file = f
