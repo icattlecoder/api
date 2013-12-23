@@ -68,19 +68,19 @@ func PutFile(l rpc.Logger, ret interface{}, uptoken, key, localFile string, extr
 	return putFile(l, ret, uptoken, key, true, localFile, extra)
 }
 
-func PutFileWithProgress(l rpc.Logger, ret interface{}, uptoken, key string, hasKey bool, localFile string, extra *PutExtra, events uploadEvents) error {
+func PutFileWithProgress(l rpc.Logger, ret interface{}, uptoken, key string, hasKey bool, localFile string, extra *PutExtra, events UploadEvents) error {
 
-	f, err := OpenUpFile(localFile, event.OnProgress)
+	f, err := OpenUpFile(localFile, events.OnProgress)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	err = putWrite(l, ret, uptoken, key, hasKey, f, extra)
 	if err != nil {
-		event.OnFailed(err)
+		events.OnFailed(err)
 	} else {
 		//really finished!
-		event.OnFinished(ret)
+		events.OnFinished(f.Size(), ret)
 	}
 	return err
 }

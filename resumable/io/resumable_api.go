@@ -7,6 +7,7 @@ import (
 	"errors"
 	"github.com/qiniu/rpc"
 	"github.com/qiniu/log"
+	qio "github.com/qiniu/api/io"
 )
 
 // ----------------------------------------------------------
@@ -129,6 +130,24 @@ func PutFile(l rpc.Logger, ret interface{}, uptoken, key, localFile string, extr
 
 func PutFileWithoutKey(l rpc.Logger, ret interface{}, uptoken, localFile string, extra *PutExtra) (err error) {
 	return putFile(l, ret, uptoken, "", false, localFile, extra)
+}
+
+func PutFileWithProgress(l rpc.Logger, ret interface{}, uptoken, key string, localFile string, extra *PutExtra, events qio.UploadEvents) error {
+
+	f, err := qio.OpenUpFile(localFile, events.OnProgress)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	err = put(l, ret, uptoken, key, true, f, f.Size(), extra)
+
+	if err != nil {
+		events.OnFailed(err)
+	} else {
+		//really finished!
+		events.OnFinished(f.Size(), ret)
+	}
+	return err
 }
 
 // ----------------------------------------------------------

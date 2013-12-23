@@ -26,6 +26,26 @@ func OpenUpFile(name string, onProgress func(file_size, uploaded int64)) (pfile 
 	return
 }
 
+func (p *UpFile) Size() int64 {
+	return p.fsize
+}
+
+func (pfile *UpFile) ReadAt(p []byte, off int64) (n int, err error) {
+	n, err = pfile.file.ReadAt(p, off)
+	if err == io.EOF {
+		return
+	} else if err != nil {
+		return
+	}
+	if !pfile.tag {
+		pfile.tag = true
+		return
+	}
+	go pfile.onProgress(pfile.fsize, pfile.uploaded)
+	pfile.uploaded += int64(n)
+	return
+}
+
 func (pfile *UpFile) Close() {
 	pfile.file.Close()
 }
@@ -36,8 +56,10 @@ func (pfile *UpFile) Read(b []byte) (n int, err error) {
 	if err == io.EOF {
 		//almost finished
 		return
+	} else if err != nil {
+		return
 	}
-	
+
 	if !pfile.tag {
 		pfile.tag = true
 		return
