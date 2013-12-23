@@ -13,9 +13,9 @@ import (
 	. "github.com/qiniu/api/conf"
 )
 
-type uploadEvents interface {
+type UploadEvents interface {
 	OnProgress(filesize, uploadedBytes int64)	//上传进度
-	OnFinished(ret interface{}) 				//上传完成
+	OnFinished(filesize int64, ret interface{}) 				//上传完成
 	OnFailed(err error) 						//上传失败
 }
 
