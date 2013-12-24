@@ -70,9 +70,10 @@ func PutFile(l rpc.Logger, ret interface{}, uptoken, key, localFile string, extr
 }
 
 func PutFileWithProgress(l rpc.Logger, ret interface{}, uptoken, key string, hasKey bool, localFile string, extra *PutExtra, events UploadEvents) error {
-
-	//OnProgressFunc(events.OnProgress)
-	f, err := OpenUpFile(localFile, OnProgressFunc(events.OnProgress))
+	onProgress := func(filesize, uploadedBytes int64) {
+		events.OnProgress(filesize, uploadedBytes)
+	}
+	f, err := OpenUpFile(localFile, onProgress)
 	if err != nil {
 		return err
 	}
