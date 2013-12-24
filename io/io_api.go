@@ -1,41 +1,42 @@
 package io
 
 import (
-	"io"
-	"os"
 	"fmt"
+	. "github.com/qiniu/api/conf"
+	"github.com/qiniu/rpc"
+	"hash/crc32"
+	"io"
+	"mime/multipart"
+	"net/textproto"
+	"os"
 	"strconv"
 	"strings"
-	"hash/crc32"
-	"net/textproto"
-	"mime/multipart"
-	"github.com/qiniu/rpc"
-	. "github.com/qiniu/api/conf"
 )
 
 type UploadEvents interface {
-	OnProgress(filesize, uploadedBytes int64)	//上传进度
-	OnFinished(filesize int64, ret interface{}) 				//上传完成
-	OnFailed(err error) 						//上传失败
+	OnProgress(filesize, uploadedBytes int64)   //上传进度
+	OnFinished(filesize int64, ret interface{}) //上传完成
+	OnFailed(err error)                         //上传失败
 }
 
 // ----------------------------------------------------------
 
 // @gist PutExtra
 type PutExtra struct {
-	Params   map[string]string    //可选，用户自定义参数，必须以 "x:" 开头
-	                              //若不以x:开头，则忽略
-	MimeType string               //可选，当为 "" 时候，服务端自动判断
+	Params map[string]string //可选，用户自定义参数，必须以 "x:" 开头
+	//若不以x:开头，则忽略
+	MimeType string //可选，当为 "" 时候，服务端自动判断
 	Crc32    uint32
 	CheckCrc uint32
-	        // CheckCrc == 0: 表示不进行 crc32 校验
-	        // CheckCrc == 1: 对于 Put 等同于 CheckCrc = 2；对于 PutFile 会自动计算 crc32 值
-	        // CheckCrc == 2: 表示进行 crc32 校验，且 crc32 值就是上面的 Crc32 变量
+	// CheckCrc == 0: 表示不进行 crc32 校验
+	// CheckCrc == 1: 对于 Put 等同于 CheckCrc = 2；对于 PutFile 会自动计算 crc32 值
+	// CheckCrc == 2: 表示进行 crc32 校验，且 crc32 值就是上面的 Crc32 变量
 }
+
 // @endgist
 
 type PutRet struct {
-	Hash string `json:"hash"`  // 如果 uptoken 没有指定 ReturnBody，那么返回值是标准的 PutRet 结构
+	Hash string `json:"hash"` // 如果 uptoken 没有指定 ReturnBody，那么返回值是标准的 PutRet 结构
 	Key  string `json:"key"`
 }
 
@@ -70,7 +71,8 @@ func PutFile(l rpc.Logger, ret interface{}, uptoken, key, localFile string, extr
 
 func PutFileWithProgress(l rpc.Logger, ret interface{}, uptoken, key string, hasKey bool, localFile string, extra *PutExtra, events UploadEvents) error {
 
-	f, err := OpenUpFile(localFile, events.OnProgress)
+	//OnProgressFunc(events.OnProgress)
+	f, err := OpenUpFile(localFile, OnProgressFunc(events.OnProgress))
 	if err != nil {
 		return err
 	}
@@ -123,7 +125,7 @@ func putWrite(l rpc.Logger, ret interface{}, uptoken, key string, hasKey bool, d
  *      0:     不进行crc32校验
  *      1:     以writeMultipart自动生成crc32的值，进行校验
  *      2:     以extra.Crc32的值，进行校验
- *      other: 和2一样， 以 extra.Crc32的值，进行校验   
+ *      other: 和2一样， 以 extra.Crc32的值，进行校验
  */
 func writeMultipart(writer *multipart.Writer, uptoken, key string, hasKey bool, data io.Reader, extra *PutExtra) (err error) {
 
@@ -153,14 +155,14 @@ func writeMultipart(writer *multipart.Writer, uptoken, key string, hasKey bool, 
 		}
 	}
 
-	//extra.CheckCrc 
+	//extra.CheckCrc
 	h := crc32.NewIEEE()
 	data1 := data
 	if extra.CheckCrc == 1 {
 		data1 = io.TeeReader(data, h)
 	}
 
-	//file 
+	//file
 	head := make(textproto.MIMEHeader)
 
 	// default the filename is same as key , but  ""
@@ -171,7 +173,7 @@ func writeMultipart(writer *multipart.Writer, uptoken, key string, hasKey bool, 
 
 	head.Set("Content-Disposition",
 		fmt.Sprintf(`form-data; name="file"; filename="%s"`, escapeQuotes(fileName)))
-	if  extra.MimeType != "" {
+	if extra.MimeType != "" {
 		head.Set("Content-Type", extra.MimeType)
 	}
 
@@ -181,7 +183,7 @@ func writeMultipart(writer *multipart.Writer, uptoken, key string, hasKey bool, 
 	}
 	_, err = io.Copy(writerBuf, data1)
 
-	//extra.CheckCrc 
+	//extra.CheckCrc
 	if extra.CheckCrc == 1 {
 		extra.Crc32 = h.Sum32()
 	}
@@ -198,4 +200,3 @@ var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
 func escapeQuotes(s string) string {
 	return quoteEscaper.Replace(s)
 }
-
