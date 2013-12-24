@@ -134,13 +134,17 @@ func PutFileWithoutKey(l rpc.Logger, ret interface{}, uptoken, localFile string,
 
 func PutFileWithProgress(l rpc.Logger, ret interface{}, uptoken, key string, localFile string, extra *PutExtra, events qio.UploadEvents) error {
 
-	f, err := qio.OpenUpFile(localFile, events.OnProgress)
+	onProgress := func(filesize, uploadedBytes int64) {
+		events.OnProgress(filesize, uploadedBytes)
+	}
+
+	f, err := qio.OpenUpFile(localFile, onProgress)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	err = put(l, ret, uptoken, key, true, f, f.Size(), extra)
 
+	err = put(l, ret, uptoken, key, true, f, f.Size(), extra)
 	if err != nil {
 		events.OnFailed(err)
 	} else {
